@@ -19,17 +19,37 @@ df.reset_index(drop=True,inplace=True)
 df.drop(columns=["ISBN","Year-Of-Publication","Image-URL-S","Image-URL-M"],axis=1,inplace=True)
 df.drop(index=df[df["Book-Rating"]==0].index,inplace=True)
 df["Book-Title"]=df["Book-Title"].apply(lambda x: re.sub("[\W_]+"," ",x).strip())
-
+df["Book-Title"]=df["Book-Title"].apply(lambda x: re.sub(" ","\n",x).strip())
 new_df=df[df['User-ID'].map(df['User-ID'].value_counts()) > 200]  # Drop users who vote less than 200 times.
 users_pivot=new_df.pivot_table(index=["User-ID"],columns=["Book-Title"],values="Book-Rating")
 users_pivot.fillna(0,inplace=True)
 
 def users_choice(id):
-    
+    '''
+        Description: 
+            Returns the top 5 favorite books of a given user based on their book ratings.
+
+        Parameters:
+            id: The user ID for whom to retrieve favorite books.
+
+        Returns:
+            DataFrame: A DataFrame containing the top 5 favorite books of the specified user.
+    '''
     users_fav=new_df[new_df["User-ID"]==id].sort_values(["Book-Rating"],ascending=False)[0:5]
     return users_fav
 
 def user_based(new_df,id):
+    '''
+        Description: 
+            Recommends similar users based on cosine similarity of book ratings.
+
+        Parameters:
+            new_df (DataFrame): The preprocessed DataFrame containing book ratings.
+            id: The user ID for whom to find similar users.
+
+        Returns:
+            list: A list of user IDs representing similar users.
+    '''
     if id not in new_df["User-ID"].values:
         print("❌ User NOT FOUND ❌")
         
@@ -49,6 +69,19 @@ def user_based(new_df,id):
     return user_rec
 
 def common(new_df,user,user_id):
+    '''
+        Description: 
+            Finds common recommended books among similar users.
+
+        Parameters:
+            new_df (DataFrame): The preprocessed DataFrame containing book ratings.
+            user (list): List of similar user IDs.
+            user_id: The user ID for whom to find common recommendations.
+        
+        Returns:
+            list: A list of recommended book titles.
+
+    '''
     x=new_df[new_df["User-ID"]==user_id]
     recommend_books=[]
     user=list(user)
@@ -67,26 +100,27 @@ n=len(user_choice_df["Book-Title"].values)
 print("🟦 USER: {} ".format(user_id))
     
 fig,ax=plt.subplots(1,n,figsize=(17,5))
-fig.suptitle("YOUR FAVORITE BOOKS",fontsize=40,color="salmon")
+fig.suptitle("YOUR FAVORITE BOOKS",fontsize=30,color="salmon")
     
 for i in range(n):
-        #url=new_df.loc[new_df["Book-Title"]==user_choice_df["Book-Title"].tolist()[i],"Image-URL-L"][:1].values[0]
-        #img=Image.open(requests.get(url,stream=True).raw)
-        #ax[i].imshow(img)
-        ax[i].axis("off")
-        ax[i].set_title("RATING: {} ".format(round(new_df[new_df["Book-Title"]==user_choice_df["Book-Title"].tolist()[i]]["Book-Rating"].mean(),1)),y=-0.20,color="mediumorchid",fontsize=22)
-        fig.show()
+    #url=new_df.loc[new_df["Book-Title"]==user_choice_df["Book-Title"].tolist()[i],"Book-Title"][:1].values[0]
+    #img=Image.open(requests.get(url,stream=True).raw)
+    #ax[i].imshow(img)
+    ax[i].axis("off")
+    ax[i].set_title("BOOK:{}\nRATING:{}".format(new_df.loc[new_df["Book-Title"]==user_choice_df["Book-Title"].tolist()[i],"Book-Title"][:1].values[0],round(new_df[new_df["Book-Title"]==user_choice_df["Book-Title"].tolist()[i]]["Book-Rating"].mean(),1)),y=0,color="mediumorchid",fontsize=20)
+    fig.show()
 
 user_based_rec=user_based(new_df,user_id)
 books_for_user=common(new_df,user_based_rec,user_id)
 books_for_userDF=pd.DataFrame(books_for_user,columns=["Book-Title"])
 
 fig,ax=plt.subplots(1,5,figsize=(17,5))
-fig.suptitle("YOU MAY ALSO LIKE THESE BOOKS",fontsize=40,color="mediumseagreen")
+fig.suptitle("YOU MAY ALSO LIKE THESE BOOKS",fontsize=30,color="mediumseagreen")
 for i in range(5):
     #url=new_df.loc[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i],"Image-URL-L"][:1].values[0]
     #img=Image.open(requests.get(url,stream=True).raw)
     #ax[i].imshow(img)
     ax[i].axis("off")
-    ax[i].set_title("RATING: {} ".format(round(new_df[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i]]["Book-Rating"].mean(),1)),y=-0.20,color="mediumorchid",fontsize=22)
+    ax[i].set_title("BOOK:{}\nRATING:{}".format(new_df.loc[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i],"Book-Title"][:1].values[0],round(new_df[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i]]["Book-Rating"].mean(),1)),y=0,color="mediumorchid",fontsize=20)
     fig.show()
+print('END')
