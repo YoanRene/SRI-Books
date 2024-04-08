@@ -123,4 +123,5 @@ for i in range(5):
     ax[i].axis("off")
     ax[i].set_title("BOOK:{}\nRATING:{}".format(new_df.loc[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i],"Book-Title"][:1].values[0],round(new_df[new_df["Book-Title"]==books_for_userDF["Book-Title"].tolist()[i]]["Book-Rating"].mean(),1)),y=0,color="mediumorchid",fontsize=20)
     fig.show()
-print('END')
+
+plt.show()
